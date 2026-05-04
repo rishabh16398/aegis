@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AntiVirus — HLD</title>
+  <style>
+    body {
+      background: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      color: #1a1a1a;
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
+    .sub { color: #666; font-size: 0.85rem; margin-bottom: 40px; }
+
+    .diagram {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* Boxes */
+    .box {
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 14px 20px;
+      background: #fff;
+      width: 100%;
+      text-align: center;
+    }
+    .box .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .box .items {
+      font-size: 0.78rem;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    /* Row of multiple boxes */
+    .row {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+    }
+    .row .box { flex: 1; }
+
+    /* Arrow */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 6px 0;
+      color: #888;
+      font-size: 0.72rem;
+      gap: 2px;
+    }
+    .arrow .line {
+      width: 1px;
+      height: 24px;
+      background: #999;
+    }
+    .arrow .head { font-size: 10px; line-height: 1; }
+    .arrow .label { color: #888; font-size: 0.68rem; }
+
+    /* Colour accents */
+    .blue   { border-color: #2563eb; background: #eff6ff; }
+    .blue   .title { color: #1d4ed8; }
+    .green  { border-color: #16a34a; background: #f0fdf4; }
+    .green  .title { color: #15803d; }
+    .orange { border-color: #d97706; background: #fffbeb; }
+    .orange .title { color: #b45309; }
+    .gray   { border-color: #6b7280; background: #f9fafb; }
+    .gray   .title { color: #374151; }
+  </style>
+</head>
+<body>
+
+<h1>AntiVirus — High Level Design</h1>
+<p class="sub">Go Backend · React TypeScript Frontend · macOS</p>
+
+<div class="diagram">
+
+  <!-- Frontend -->
+  <div class="box blue">
+    <div class="title">Frontend — React TypeScript</div>
+    <div class="items">Dashboard · File Scanner UI · Network Monitor · Alerts · Settings</div>
+  </div>
+
+  <div class="arrow">
+    <div class="line"></div>
+    <div class="head">▼</div>
+    <div class="label">REST API + WebSocket</div>
+  </div>
+
+  <!-- Backend API -->
+  <div class="box gray">
+    <div class="title">Backend — Go API Server</div>
+    <div class="items">HTTP REST endpoints · WebSocket (live events) · Auth · Scheduler</div>
+  </div>
+
+  <div class="arrow">
+    <div class="line"></div>
+    <div class="head">▼</div>
+    <div class="label">dispatches to</div>
+  </div>
+
+  <!-- 3 Engines -->
+  <div class="row">
+    <div class="box green">
+      <div class="title">File Scanner</div>
+      <div class="items">ClamAV<br>YARA rules<br>Hash lookup<br>Quarantine</div>
+    </div>
+    <div class="box green">
+      <div class="title">Network Monitor</div>
+      <div class="items">libpcap / gopacket<br>IP reputation<br>DNS inspection<br>Suricata rules</div>
+    </div>
+    <div class="box green">
+      <div class="title">Process Monitor</div>
+      <div class="items">Running processes<br>Suspicious behaviour<br>CPU / mem spikes<br>Audit log</div>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="line"></div>
+    <div class="head">▼</div>
+    <div class="label">reads / writes</div>
+  </div>
+
+  <!-- Storage + Threat Intel -->
+  <div class="row">
+    <div class="box orange">
+      <div class="title">Storage</div>
+      <div class="items">SQLite (scan history)<br>ClamAV signature DB<br>YARA rule files</div>
+    </div>
+    <div class="box orange">
+      <div class="title">Threat Intelligence</div>
+      <div class="items">VirusTotal API<br>AbuseIPDB<br>MalwareBazaar</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
