@@ -5,12 +5,13 @@ import (
 
 	"github.com/aegis-av/aegis/internal/api/handlers"
 	"github.com/aegis-av/aegis/internal/api/respond"
+	"github.com/aegis-av/aegis/internal/api/ws"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-func NewRouter() http.Handler {
+func NewRouter(hub *ws.Hub) http.Handler {
 	r := chi.NewRouter()
 
 	// ── Middleware stack ──────────────────────────────────────────────────────
@@ -40,6 +41,9 @@ func NewRouter() http.Handler {
 	quarantine := handlers.NewQuarantineHandler()
 	alert      := handlers.NewAlertHandler()
 	stats      := handlers.NewStatsHandler()
+
+	// WebSocket — frontend connects here for live events.
+	r.Get("/ws", hub.ServeWS)
 
 	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
 		respond.JSON(w, http.StatusOK, map[string]string{"status": "ok"})

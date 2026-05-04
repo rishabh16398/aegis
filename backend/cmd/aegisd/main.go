@@ -12,6 +12,7 @@ import (
 
 	"github.com/aegis-av/aegis/internal/alert"
 	"github.com/aegis-av/aegis/internal/api"
+	"github.com/aegis-av/aegis/internal/api/ws"
 	"github.com/aegis-av/aegis/internal/config"
 	"github.com/aegis-av/aegis/internal/db"
 	"github.com/aegis-av/aegis/internal/network"
@@ -59,7 +60,10 @@ func main() {
 	_ = alertEngine
 	_ = scanEngine
 
-	router := api.NewRouter()
+	hub := ws.NewHub()
+	go hub.Run()
+
+	router := api.NewRouter(hub)
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr(),
 		Handler:      router,
