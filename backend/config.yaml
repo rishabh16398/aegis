@@ -1,0 +1,23 @@
+server:
+  host: "127.0.0.1"
+  port: 8080
+
+database:
+  path: "./aegis.db"
+
+scanner:
+  workers: 4
+  watch_paths:
+    - "/Users"
+    - "/Applications"
+  quarantine_path: "./quarantine"
+
+network:
+  interface: "en0"
+  enabled: true
+
+threat_intel:
+  virustotal_key: ""   # optional — plug in your own key
+  abuseipdb_key:  ""   # optional
+
+log_level: "info"
