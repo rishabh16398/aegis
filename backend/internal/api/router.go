@@ -6,43 +6,32 @@ import (
 	"github.com/aegis-av/aegis/internal/api/handlers"
 	"github.com/aegis-av/aegis/internal/api/respond"
 	"github.com/aegis-av/aegis/internal/api/ws"
+	"github.com/aegis-av/aegis/internal/db"
+	"github.com/aegis-av/aegis/internal/scanner"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-func NewRouter(hub *ws.Hub) http.Handler {
+func NewRouter(hub *ws.Hub, scanEngine *scanner.Engine, database *db.DB) http.Handler {
 	r := chi.NewRouter()
 
-	// ── Middleware stack ──────────────────────────────────────────────────────
-	// Every request passes through these in order, top to bottom.
-
-	// Recover from panics and return 500 instead of crashing the server.
 	r.Use(middleware.Recoverer)
-
-	// Log every request: method, path, status, duration.
 	r.Use(middleware.Logger)
-
-	// Real IP — populate r.RemoteAddr correctly behind proxies.
 	r.Use(middleware.RealIP)
-
-	// CORS — allow the React dev server (localhost:5173) to talk to us.
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"http://localhost:5173", "http://localhost:3000"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Accept", "Content-Type", "Authorization"},
 	}))
 
-	// ── Routes ───────────────────────────────────────────────────────────────
-
-	scan       := handlers.NewScanHandler()
+	scan       := handlers.NewScanHandler(scanEngine, database)
 	network    := handlers.NewNetworkHandler()
 	process    := handlers.NewProcessHandler()
 	quarantine := handlers.NewQuarantineHandler()
-	alert      := handlers.NewAlertHandler()
-	stats      := handlers.NewStatsHandler()
+	alert      := handlers.NewAlertHandler(database)
+	stats      := handlers.NewStatsHandler(database)
 
-	// WebSocket — frontend connects here for live events.
 	r.Get("/ws", hub.ServeWS)
 
 	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +40,6 @@ func NewRouter(hub *ws.Hub) http.Handler {
 
 	r.Get("/api/v1/stats", stats.Get)
 
-	// Scan
 	r.Route("/api/v1/scan", func(r chi.Router) {
 		r.Post("/file", scan.StartFileScan)
 		r.Post("/directory", scan.StartDirScan)
@@ -61,7 +49,6 @@ func NewRouter(hub *ws.Hub) http.Handler {
 		r.Delete("/jobs/{id}", scan.CancelJob)
 	})
 
-	// Network
 	r.Route("/api/v1/network", func(r chi.Router) {
 		r.Get("/connections", network.ListConnections)
 		r.Get("/events", network.ListEvents)
@@ -70,20 +57,17 @@ func NewRouter(hub *ws.Hub) http.Handler {
 		r.Delete("/blocked/{ip}", network.UnblockIP)
 	})
 
-	// Processes
 	r.Route("/api/v1/processes", func(r chi.Router) {
 		r.Get("/", process.ListProcesses)
 		r.Get("/suspicious", process.ListSuspicious)
 	})
 
-	// Quarantine
 	r.Route("/api/v1/quarantine", func(r chi.Router) {
 		r.Get("/", quarantine.List)
 		r.Post("/{id}/restore", quarantine.Restore)
 		r.Delete("/{id}", quarantine.Delete)
 	})
 
-	// Alerts
 	r.Route("/api/v1/alerts", func(r chi.Router) {
 		r.Get("/", alert.List)
 		r.Put("/{id}/ack", alert.Acknowledge)

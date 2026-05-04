@@ -31,8 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger := newLogger(cfg.LogLevel)
-	slog.SetDefault(logger)
+	slog.SetDefault(newLogger(cfg.LogLevel))
 
 	database, err := db.New(cfg.Database.Path)
 	if err != nil {
@@ -41,8 +40,14 @@ func main() {
 	}
 	defer database.Close()
 
-	alertEngine := alert.New()
-	scanEngine := scanner.New(cfg.Scanner.Workers, cfg.Scanner.QuarantinePath)
+	// Boot order matters: hub → alert → scanner → router.
+	hub := ws.NewHub()
+	go hub.Run()
+
+	alertEngine := alert.New(database, hub)
+	scanEngine := scanner.New(cfg.Scanner.Workers, cfg.Scanner.QuarantinePath, database, hub, alertEngine)
+
+	// Stubs — will be filled in later tasks.
 	netMonitor := network.New(cfg.Network.Interface)
 	procMonitor := process.New()
 	_ = quarantine.New(cfg.Scanner.QuarantinePath)
@@ -53,17 +58,10 @@ func main() {
 		}
 		defer netMonitor.Stop()
 	}
-
 	procMonitor.Start()
 	defer procMonitor.Stop()
 
-	_ = alertEngine
-	_ = scanEngine
-
-	hub := ws.NewHub()
-	go hub.Run()
-
-	router := api.NewRouter(hub)
+	router := api.NewRouter(hub, scanEngine, database)
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr(),
 		Handler:      router,
